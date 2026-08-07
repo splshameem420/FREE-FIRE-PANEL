@@ -1,0 +1,53 @@
+name: Auto Build EXE with Auto-Increment Version
+
+on:
+  push:
+    paths:
+      - '**.py' # যেকোনো পাইথন ফাইল আপডেট হলে এটি রান হবে
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyinstaller requests keyauth pyfiglet
+
+    - name: Build EXE with Auto Version
+      shell: powershell
+      run: |
+        # গিটহাব অ্যাকশনসের অটোমেটিক কাউন্টার দিয়ে ভার্সন জেনারেট (যেমন: 2.0, 2.1, 2.2)
+        $majorVersion = "2"
+        $buildNum = ${{ github.run_number }} - 1
+        $ver = "$majorVersion.$buildNum"
+        $exeName = "bd-hex-cheat$ver"
+
+        # version.json ফাইল অটোমেটিক তৈরি/আপডেট করা
+        @{ version = $ver } | ConvertTo-Json | Set-Content -Path "version.json"
+
+        # PyInstaller দিয়ে ডাইনামিক ভার্সনের EXE তৈরি
+        pyinstaller --noconfirm --onefile --console --collect-all pyfiglet --name $exeName Loader.py
+
+        # Updates ফোল্ডারে ফাইল সেভ করা
+        if (!(Test-Path -Path "Updates")) { New-Item -ItemType Directory -Path "Updates" }
+        Copy-Item -Path "dist/$exeName.exe" -Destination "Updates/$exeName.exe" -Force
+
+    - name: Commit and Push Updated EXE and version.json
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add Updates/ version.json
+        git commit -m "Auto-built versioned EXE from push" || exit 0
+        git push
