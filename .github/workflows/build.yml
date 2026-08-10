@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write # 👈 push করার পারমিশন দেওয়া হলো (403 Error ফিক্স)
 
     steps:
     - name: Checkout Repository
@@ -21,12 +23,12 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller requests keyauth pyfiglet
+        pip install pyinstaller requests keyauth pyfiglet rarfile
 
     - name: Build EXE with Auto Version
       shell: powershell
       run: |
-        # গিটহাব অ্যাকশনসের অটোমেটিক কাউন্টার দিয়ে ভার্সন জেনারেট (যেমন: 2.0, 2.1, 2.2)
+        # গিটহাব অ্যাকশনসের অটোমেটিক কাউন্টার দিয়ে ভার্সন জেনারেট
         $majorVersion = "2"
         $buildNum = ${{ github.run_number }} - 1
         $ver = "$majorVersion.$buildNum"
@@ -35,8 +37,8 @@ jobs:
         # version.json ফাইল অটোমেটিক তৈরি/আপডেট করা
         @{ version = $ver } | ConvertTo-Json | Set-Content -Path "version.json"
 
-        # PyInstaller দিয়ে ডাইনামিক ভার্সনের EXE তৈরি
-        pyinstaller --noconfirm --onefile --console --collect-all pyfiglet --name $exeName Loader.py
+        # PyInstaller দিয়ে rarfile এবং pyfiglet সহ ডাইনামিক ভার্সনের EXE তৈরি
+        pyinstaller --noconfirm --onefile --console --collect-all pyfiglet --hidden-import=rarfile --name $exeName Loader.py
 
         # Updates ফোল্ডারে ফাইল সেভ করা
         if (!(Test-Path -Path "Updates")) { New-Item -ItemType Directory -Path "Updates" }
@@ -45,9 +47,10 @@ jobs:
     - name: Commit and Push Updated EXE and version.json
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      shell: powershell
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add Updates/ version.json
-        git commit -m "Auto-built versioned EXE from push" || exit 0
-        git push
+        git commit -m "Auto-built versioned EXE (v$ver) from push"
+        git push origin main
