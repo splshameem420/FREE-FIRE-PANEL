@@ -3,17 +3,17 @@ name: Auto Build EXE with Auto-Increment Version
 on:
   push:
     paths:
-      - '**.py' # যেকোনো পাইথন ফাইল আপডেট হলে এটি রান হবে
+      - '**.py'
 
 jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write # Git Push-এর পারমিশন
+      contents: write
 
     steps:
     - name: Checkout Repository
-      uses: uses/checkout@v4
+      uses: actions/checkout@v4   # 👈 এখানে সংশোধন করা হয়েছে
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -35,7 +35,6 @@ jobs:
 
         @{ version = $ver } | ConvertTo-Json | Set-Content -Path "version.json"
 
-        # PyInstaller দিয়ে সকল প্যাকেজসহ EXE বিল্ড
         pyinstaller --noconfirm --onefile --console `
           --collect-all pyfiglet `
           --hidden-import=rarfile `
