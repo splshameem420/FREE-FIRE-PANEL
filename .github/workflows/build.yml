@@ -9,11 +9,11 @@ jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write # 👈 push করার পারমিশন দেওয়া হলো (403 Error ফিক্স)
+      contents: write # Git Push-এর পারমিশন
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: uses/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -23,24 +23,27 @@ jobs:
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pyinstaller requests keyauth pyfiglet rarfile
+        pip install pyinstaller requests keyauth pyfiglet rarfile qrcode discord-interactions Pillow
 
     - name: Build EXE with Auto Version
       shell: powershell
       run: |
-        # গিটহাব অ্যাকশনসের অটোমেটিক কাউন্টার দিয়ে ভার্সন জেনারেট
         $majorVersion = "2"
         $buildNum = ${{ github.run_number }} - 1
         $ver = "$majorVersion.$buildNum"
         $exeName = "bd-hex-cheat$ver"
 
-        # version.json ফাইল অটোমেটিক তৈরি/আপডেট করা
         @{ version = $ver } | ConvertTo-Json | Set-Content -Path "version.json"
 
-        # PyInstaller দিয়ে rarfile এবং pyfiglet সহ ডাইনামিক ভার্সনের EXE তৈরি
-        pyinstaller --noconfirm --onefile --console --collect-all pyfiglet --hidden-import=rarfile --name $exeName Loader.py
+        # PyInstaller দিয়ে সকল প্যাকেজসহ EXE বিল্ড
+        pyinstaller --noconfirm --onefile --console `
+          --collect-all pyfiglet `
+          --hidden-import=rarfile `
+          --hidden-import=qrcode `
+          --hidden-import=discord_interactions `
+          --hidden-import=PIL `
+          --name $exeName Loader.py
 
-        # Updates ফোল্ডারে ফাইল সেভ করা
         if (!(Test-Path -Path "Updates")) { New-Item -ItemType Directory -Path "Updates" }
         Copy-Item -Path "dist/$exeName.exe" -Destination "Updates/$exeName.exe" -Force
 
