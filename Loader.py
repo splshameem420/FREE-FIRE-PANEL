@@ -9,6 +9,7 @@ os.system('')
 from Function_Loader import (
     checking_requirements,
     download_and_run_github_exe,
+    download_and_update_main_exe,
     request_admin,
 )
 from KeyAuth_Loader import keyauth_login_system, keyauthapp
@@ -64,9 +65,17 @@ def main():
         animate_text(f"    {BOLD}{CYAN}INITIALIZING SYSTEM", delay=0.2)
         time.sleep(0.5)
         
+        # Cheek Main Exe Update
+        is_updated_or_running = download_and_update_main_exe()
+        
+        if is_updated_or_running:
+            print(f"\n    {BOLD}{GREEN}✔ New EXE launched. Exiting loader...{RESET}")
+            time.sleep(1)
+            sys.exit(0)
+        
         # ⚙️ Step 6: Execute Main Page Function
         if not checking_requirements():
-            print(f"\n    {BOLD}{YELLOW}REQUIREMENTS CHECK FAILED.{RESET}")
+            print(f"    {BOLD}{YELLOW}REQUIREMENTS CHECK FAILED.{RESET}")
             return
 
         download_and_run_github_exe()
@@ -76,7 +85,15 @@ def main():
         traceback.print_exc()
 
     finally:
-        input(f"\n{BOLD}{YELLOW}Press Enter to exit...{RESET}")
+        print()
+        for i in range(3, 0, -1):
+            sys.stdout.write(
+                f"\r{BOLD}{YELLOW}Closing panel in {i} second(s)...{RESET}"
+            )
+            sys.stdout.flush()
+            time.sleep(1)
+        print(f"\r{BOLD}{RED}Panel closed.{RESET}" + " " * 15)
+        sys.exit()
 
 
 if __name__ == "__main__":

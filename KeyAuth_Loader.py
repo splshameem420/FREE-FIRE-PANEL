@@ -15,6 +15,15 @@ from Style_Loader import (
     setup_terminal_size,
 )
 
+# 📂 LocalAppData ফোল্ডারে ফাইল সেভ করার পাথ
+APP_STORAGE_DIR = os.path.join(os.getenv('LOCALAPPDATA'), "NinjaLoader_Data")
+
+if not os.path.exists(APP_STORAGE_DIR):
+    os.makedirs(APP_STORAGE_DIR, exist_ok=True)
+
+# Credentials ফাইলের নতুন লোকেশন
+CREDENTIALS_FILE = os.path.join(APP_STORAGE_DIR, "auth_credentials.json")
+
 
 def getchecksum():
     return ""
@@ -31,8 +40,6 @@ except Exception as e:  # noqa: BLE001
     print(f"\n    {RED}Security Connection Failed: {e}{RESET}")
     time.sleep(2)
     sys.exit(1)
-
-CREDENTIALS_FILE = "auth_credentials.json"
 
 
 def save_credentials(username, password):
@@ -138,7 +145,7 @@ def keyauth_login_system():
                 current_field="login",
             )
             print(
-                f"       {YELLOW}USERNAME AND PASSWORD ALREDY SAVED || CLICK ENTER TO LOGIN OR SPACE TO CLEAR{RESET}"
+                f"       {YELLOW}USERNAME AND PASSWORD ALREADY SAVED || CLICK ENTER TO LOGIN OR SPACE TO CLEAR{RESET}"
             )
 
             while True:
